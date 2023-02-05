@@ -4,10 +4,15 @@
 
 //Thư viện của RFID
 int UID[4], i;
-int ID1[4] = {236, 186, 76, 46}; //Thẻ trẻ em
-int Kid_card = random(2,4);
-int ID2[4] = {253, 208, 132, 175}; // Thẻ người lớn
-int Adult_card = random(2,4);
+int ID[3][4]= {{236, 186, 76, 46},{253, 208, 132, 175},{29, 57, 0, 201}};
+
+
+
+
+#define ADULT_AGE 18
+#define ADULT_PRICE 20000
+#define KID_PRICE 10000
+
 #include <SPI.h>   // Chuẩn giao tiếp của RFID là SPI
 #include <MFRC522.h> // Thư viện này cũng liên quan đến RFID
 
@@ -25,9 +30,8 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); //Thiết lập địa chỉ và loại LCD
 MFRC522 mfrc522(SS_PIN, RST_PIN);  //--> Create MFRC522 instance.
 
 Servo myservo;
-
 void setup() {
-  Serial.begin(115200); //--> Initialize serial communications with the PC   ! cái này ko quan trọng lắm
+  Serial.begin(9600); //--> Initialize serial communications with the PC   ! cái này ko quan trọng lắm
   SPI.begin();      //--> Init SPI bus   // Khởi động SPI
   Wire.begin(2, 0);  // Đặt chân SDA và SCL cho đường truyền tín hiệu. số 2 là GPIO2, số 0 là GPIO0 . 
                     // Có thể Custom chân nào cũng được, miễn là chân GPIO là được
@@ -39,17 +43,31 @@ void setup() {
   lcd.clear();
   lcd.init();                 //Bắt đầu màn hình
   lcd.backlight();            // Bật đèn nền
-  lcd.setCursor(0, 0); lcd.print("    Welcome     ");
-  lcd.setCursor(0, 1); lcd.print("Quet The Tai Day");
-//  lcd.display();              // Hiển thị lên màn hình.
+
+  lcd.setCursor(0, 0); lcd.print("    xin chao     ");
+  lcd.setCursor(0, 1); lcd.print("  tram tau BK ");
+  delay(2500);
+  lcd.clear();
+  lcd.setCursor(0, 0); lcd.print("Nguoi Lon:20000 ");
+  lcd.setCursor(0, 1); lcd.print("Tre Em:10000");
+  delay(2500);
+  lcd.clear();
+  lcd.setCursor(0, 0); lcd.print("    xin chao     ");
+  lcd.setCursor(0, 1); lcd.print("Quet The tai day");
+  lcd.display();              // Hiển thị lên màn hình.
   lcd.blink();                // Nhấp nháy con trỏ ở vị trí cuối cùng
   pinMode(ON_Board_LED, OUTPUT);
 
 }
 void loop()
 {
-    // Nếu để thẻ mới vào, đọc 1 lần thôi; nếu để thẻ lâu thì sẽ nhận biết là thẻ đọc rồi không đọc tiếp nữa
-  // Nhận biết thẻ mới thẻ cũ
+
+
+
+  lcd.clear();
+  delay(2500);
+  lcd.setCursor(0, 0); lcd.print("    xin chao     ");
+  lcd.setCursor(0, 1); lcd.print("Quet The tai day");
   if ( ! mfrc522.PICC_IsNewCardPresent()) 
   { 
     return; 
@@ -67,45 +85,76 @@ void loop()
     UID[i] = mfrc522.uid.uidByte[i];
     Serial.print(UID[i]);
   }
-  if (UID[i] == ID1[i])
-  {
-    lcd.clear();
-    lcd.setCursor(0, 0); lcd.print("  The Tre Em!!");
+  int Age = UID[0] % 38 ;
+  int count = 0;
+  bool ab = false;
+  for(byte i = 0 ;i < 4;i++){
+    if(UID[0] ==  ID[i][0]){
+      ab = true;
+      break;
+    }
+    count ++;
+  }
 
-    if (Kid_card > 0)
-    {
-      lcd.setCursor(0, 1); lcd.print("So du: ");
-      Kid_card -= 1;
-      lcd.print(Kid_card*10000);
+  if (true)
+  {
+
+    int Price = ID[count][3]*100; 
+
+    lcd.clear();
+    lcd.setCursor(0, 1); lcd.print("So du: ");
+    lcd.print(Price);
+    if(Age >= ADULT_AGE){
+    lcd.setCursor(0, 0); lcd.print("The Nguoi Lon");
+      delay(3000);
+          if( Price>= ADULT_PRICE){
+            lcd.clear();
+            lcd.setCursor(0, 0); lcd.print("Thanh toan xong");
+            lcd.setCursor(0, 1); lcd.print("so du: ");
+            ID[count][3] -= 200;             
+            lcd.print(Price - ADULT_PRICE);
+            myservo.write(0); delay(3000);
+            myservo.write(90);delay(250); 
+          }
+          else{
+            lcd.clear();
+            lcd.setCursor(0, 0); lcd.print("Thanh toan Loi");
+            lcd.setCursor(0, 1); lcd.print("so du khong du");
+            lcd.display();
+            return;
+          }
     }
     else{
-      lcd.setCursor(0, 1); lcd.print("So Du Khong Du! ");  
-      return;
-      }
-    lcd.display();
-    myservo.write(0); delay(3000);
-    myservo.write(90);delay(250); 
-  }
-  else if (UID[i] == ID2[i])
-  {
-    lcd.clear();
-    lcd.setCursor(0, 0); lcd.print("  The Nguoi Lon!!");
 
-    if (Adult_card > 0)
-    {
-      lcd.setCursor(0, 1); lcd.print("So du: ");
-      Adult_card -= 1;
-      lcd.print(Adult_card*20000);
+    int Price = ID[count][3]*400; 
+
+    lcd.clear();
+    lcd.setCursor(0, 1); lcd.print("So du: ");
+    lcd.print(Price);
+    if(Age < ADULT_AGE){
+    lcd.setCursor(0, 0); lcd.print("The Tre Em");
+      delay(3000);
+          if( Price >= KID_PRICE){
+            lcd.clear();
+            lcd.setCursor(0, 0); lcd.print("Thanh toan xong");
+            lcd.setCursor(0, 1); lcd.print("so du:");
+            ID[count][3] -= 25;             
+            lcd.print(Price - 10000);
+            myservo.write(0); delay(3000);
+            myservo.write(90);delay(250);           
+          }
+          else{
+            lcd.clear();
+            lcd.setCursor(0, 0); lcd.print("Thanh toan Loi");
+            lcd.setCursor(0, 1); lcd.print("so du khong du");
+            lcd.display();
+            return;
+          } 
+
     }
-    else{
-      lcd.setCursor(0, 1); lcd.print("So Du Khong Du! ");  
-      return;
-      }
-    lcd.display();
-    myservo.write(0); delay(3000);
-    myservo.write(90);delay(250); 
+
+    }
   }
-  
   else
   {
     lcd.clear();
@@ -117,6 +166,6 @@ void loop()
   }
   
   mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
-    mfrc522.PICC_HaltA();  
+  mfrc522.PICC_HaltA();  
   mfrc522.PCD_StopCrypto1();
 }
