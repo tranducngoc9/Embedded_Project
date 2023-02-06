@@ -66,6 +66,7 @@ void loop()
     Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");   
     UID[i] = mfrc522.uid.uidByte[i];
     Serial.print(UID[i]);
+    Serial.print("\n");
   }
   if (UID[i] == ID1[i])
   {
